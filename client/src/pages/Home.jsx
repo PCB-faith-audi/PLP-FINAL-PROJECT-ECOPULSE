@@ -4,61 +4,77 @@ import { Leaf, Gauge, BookOpen, Newspaper, Info } from "lucide-react";
 import { pickAsset } from "../components/AssetPicker.js";
 import climateImg from "../assets/climate.jpg"; // ensure this file exists
 import energyUsage from "../assets/energy-usage.jpg";
+import heroFallback1 from "../assets/coast.jpg";
+import heroFallback2 from "../assets/sunny.jpg";
+import heroFallback3 from "../assets/sunlight.jpg";
 
 // Asset URLs
 const heroVideo = pickAsset(["hero.mp4", "intro", "climate"]);
 const heroImage = pickAsset(["hero", "intro", "climate", "earth", "forest", "mountain"]);
-const forestUrl = pickAsset(["forest", "trees", "scene"]);
-const turbineUrl = pickAsset(["turbine", "wind"]);
-const logoUrl = pickAsset(["logo", "leaf", "brand"]);
-const welcomeImg = pickAsset(["home-welcome", "welcome", "ecopulse", "climate"]);
-
-// Fallback image URLs
-const images = [
-  "/src/assets/coast.jpg",
-  "/src/assets/sunny.jpg",
-  "/src/assets/sunlight.jpg",
-];
+const heroCandidates = [heroImage, heroFallback1, heroFallback2, heroFallback3].filter(Boolean);
 
 export default function Home() {
   const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [failed, setFailed] = useState(new Set());
+
+  // Define optional assets to avoid ReferenceError and provide fallbacks
+  const logoUrl =
+    pickAsset(["logo.svg", "logo.png", "logo", "leaf", "ecopulse"]) || null;
+  const turbineUrl =
+    pickAsset(["turbine", "wind", "wind-turbine", "turbines"]) || null;
+  const forestUrl =
+    pickAsset(["forest", "trees", "woods", "jungle"]) || null;
+  const welcomeImg =
+    pickAsset(["welcome", "hero", "forest", "coast", "sunny", "sunlight"]) ||
+    heroFallback1;
+
+  useEffect(() => {
+    if (heroCandidates.length < 2) return;
+    const id = setInterval(() => {
+      setCurrentIndex((i) => (i + 1) % heroCandidates.length);
+    }, 6000);
+    return () => clearInterval(id);
+  }, [heroCandidates.length]);
 
   return (
     <div className="space-y-8">
-
-      {/* HERO SECTION */}
+      {/* HERO SECTION (updated) */}
       <section className="relative w-full h-[55vh] sm:h-[60vh] md:h-[65vh] lg:h-[70vh] overflow-hidden">
-        <img
-          src={images[currentIndex]}
-          alt="EcoPulse Hero"
-          className="w-full h-full object-cover object-center"
-          style={{ transition: "opacity 0.7s ease-in-out" }}
-        />
+        {heroCandidates[currentIndex] && !failed.has(heroCandidates[currentIndex]) ? (
+          <img
+            key={heroCandidates[currentIndex]}
+            src={heroCandidates[currentIndex]}
+            alt="EcoPulse Hero"
+            className="w-full h-full object-cover object-center"
+            onError={() =>
+              setFailed(prev => new Set([...prev, heroCandidates[currentIndex]]))
+            }
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-emerald-800 via-emerald-600 to-emerald-500" />
+        )}
 
-        {/* DARK OVERLAY */}
-        <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-center text-white px-4">
-          <h1 className="text-4xl sm:text-5xl font-extrabold text-white max-w-xl leading-tight">
+        <div className="absolute inset-0 bg-black/55 flex flex-col items-center justify-center text-center text-white px-4">
+          <h1 className="text-4xl sm:text-5xl font-extrabold leading-tight">
             Track Your Carbon Footprint Today
           </h1>
-          <p className="mt-4 text-emerald-50 max-w-lg">
+          <p className="mt-6 max-w-xl text-emerald-50">
             EcoPulse helps you monitor energy usage, reduce emissions, and join real impact projects.
           </p>
-
-          <div className="mt-6 flex gap-4 flex-wrap justify-center">
-            <a
-              href="/dashboard"
+          <div className="mt-10 flex gap-4 flex-wrap justify-center">
+            <button
+              onClick={() => navigate("/dashboard")}
               className="px-6 py-3 bg-green-600 hover:bg-green-700 rounded-md text-white font-semibold"
             >
               Start Tracking
-            </a>
-
-            <a
-              href="/projects"
+            </button>
+            <button
+              onClick={() => navigate("/projects")}
               className="px-6 py-3 bg-white text-black hover:bg-gray-200 rounded-md font-semibold"
             >
               Explore Projects
-            </a>
+            </button>
           </div>
         </div>
       </section>
@@ -273,11 +289,27 @@ export default function Home() {
           <div className="relative h-56 sm:h-64">
             <img src={welcomeImg} alt="Welcome to EcoPulse" className="absolute inset-0 w-full h-full object-cover" />
             <div className="absolute inset-0 bg-emerald-900/35" />
-            <div className="relative z-10 h-full flex flex-col justify-center px-8">
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-white">Welcome to EcoPulse</h2>
-              <p className="mt-2 text-emerald-50 text-sm max-w-xl">
-                Track, learn, and act on climate—starting with your home energy and footprint.
+            <div className="relative z-10 h-full flex flex-col items-center justify-center text-center p-4">
+              <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">
+                Welcome to EcoPulse
+              </h2>
+              <p className="text-sm sm:text-base text-emerald-100 max-w-md mx-auto">
+                Join us in tracking and reducing your carbon footprint. Together, we can make a difference.
               </p>
+              <div className="mt-4 flex gap-3">
+                <button
+                  onClick={() => navigate("/dashboard")}
+                  className="flex-1 px-4 py-2 rounded-md bg-green-600 hover:bg-green-700 text-white font-semibold transition"
+                >
+                  Go to Dashboard
+                </button>
+                <button
+                  onClick={() => navigate("/projects")}
+                  className="flex-1 px-4 py-2 rounded-md bg-white text-black hover:bg-gray-200 transition"
+                >
+                  View Projects
+                </button>
+              </div>
             </div>
           </div>
         </section>
