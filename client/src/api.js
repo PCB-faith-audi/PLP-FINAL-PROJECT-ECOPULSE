@@ -1,10 +1,13 @@
 import axios from "axios";
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "";
-export const api = axios.create({
-  baseURL: API_BASE, // empty = same-origin (dev uses Vite proxy)
+const BASE = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/$/, "");
+const api = axios.create({
+  baseURL: BASE, // e.g., "" in dev with proxy, or "https://ecopulse-backend-rn21.onrender.com" in prod
   withCredentials: true,
 });
+
+// Example usage: api.get("/api/energy")
+export { api };
 
 // If you have existing axios usage, reuse `api` instead of axios directly.
 

@@ -1,46 +1,65 @@
 import express from "express";
-import mongoose from "mongoose";
+import dotenv from "dotenv";
 import helmet from "helmet";
 import cors from "cors";
 import rateLimit from "express-rate-limit";
-import dotenv from "dotenv";
-dotenv.config();
 
-import authRoutes from "./routes/auth.js";
-import profileRoutes from "./routes/profile.js";
+// routes
 import energyRoutes from "./routes/energy.js";
 import carbonRoutes from "./routes/carbon.js";
 import climateRoutes from "./routes/climate.js";
 import newsRoutes from "./routes/news.js";
+import authRoutes from "./routes/auth.js";
+import profileRoutes from "./routes/profile.js";
+
+dotenv.config();
 
 const app = express();
-app.use(express.json());
+const PORT = process.env.PORT || 5000;
 
-// Trust proxy when behind Vercel/Netlify/Render
+// trust proxy when on Render/Heroku
 app.set("trust proxy", 1);
 
-// Security headers
-app.use(helmet({
-  contentSecurityPolicy: process.env.NODE_ENV === "production" ? undefined : false,
-}));
-
-// Rate limit (tune if needed)
+// security headers and rate limit
+app.use(
+  helmet({
+    contentSecurityPolicy: process.env.NODE_ENV === "production" ? undefined : false,
+  })
+);
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 1000 }));
 
-// CORS: allow your frontend origin (dev + prod)
+// json body
+app.use(express.json());
+
+// CORS allowlist (add your deployed frontend)
 const allowedOrigins = [
   "http://localhost:5174",
-  process.env.FRONTEND_ORIGIN, // e.g., https://ecopulse.vercel.app
+  process.env.FRONTEND_ORIGIN, // e.g., https://ecopulse-frontend.vercel.app
 ].filter(Boolean);
-app.use(cors({
-  origin: (origin, cb) => {
-    if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
-    return cb(new Error("Not allowed by CORS"));
-  },
-  credentials: true,
-}));
 
-// Inject mocks BEFORE mounting real routes
+app.use(
+  cors({
+    origin: (origin, cb) => {
+      if (!origin) return cb(null, true); // allow curl/postman
+      if (allowedOrigins.includes(origin)) return cb(null, true);
+      return cb(new Error("Not allowed by CORS"));
+    },
+    credentials: true,
+  })
+);
+
+// Friendly root and health for Render
+app.get("/", (_req, res) => {
+  res.status(200).json({
+    name: "EcoPulse API",
+    status: "ok",
+    uptime: process.uptime(),
+    docs: "/api",
+  });
+});
+app.get("/healthz", (_req, res) => res.status(200).send("ok"));
+
+// DEV MOCKS: disable in production (USE_MOCKS=0)
 if (process.env.USE_MOCKS === "1") {
   const day = 86400000;
   const today = new Date();
@@ -76,7 +95,6 @@ if (process.env.USE_MOCKS === "1") {
     ],
   };
 
-  // Mock endpoints used by the client
   app.get("/api/energy", (_req, res) => res.json({ items: mockEnergy }));
   app.get("/api/carbon", (_req, res) => res.json({ items: mockCarbon }));
   app.get("/api/climate", (_req, res) => res.json(mockClimate));
@@ -85,28 +103,25 @@ if (process.env.USE_MOCKS === "1") {
   app.get("/api/news", (_req, res) => res.json(mockNews));
 }
 
-// Routes
-app.use("/api", authRoutes);
-app.use("/api", profileRoutes);
-app.use("/api", energyRoutes);
-app.use("/api", carbonRoutes);
-app.use("/api", climateRoutes);
+// Real routes (mounted under /api)
+app.use("/api/energy", energyRoutes);
+app.use("/api/carbon", carbonRoutes);
+app.use("/api/climate", climateRoutes);
 app.use("/api/news", newsRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/profile", profileRoutes);
 
-// Connect to MongoDB
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("MongoDB connected"))
-  .catch(err => console.error(err));
-
-// Error handling middleware
-app.use((err, _req, res, _next) => {
-  console.error("Server error:", err);
-  res.status(err.status || 500).json({
-    error: err.message || "Internal Server Error",
-    ...(process.env.NODE_ENV !== "production" ? { stack: err.stack } : {}),
-  });
+// 404 for unknown routes
+app.use((_req, res) => {
+  res.status(404).json({ error: "Not Found" });
 });
 
-// Start server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// error handler last
+app.use((err, _req, res, _next) => {
+  console.error("Server error:", err);
+  res.status(err.status || 500).json({ error: err.message || "Internal Server Error" });
+});
+
+app.listen(PORT, () => {
+  console.log(`EcoPulse API listening on port ${PORT}`);
+});
