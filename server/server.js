@@ -17,49 +17,35 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// trust proxy when on Render/Heroku
+// trust proxy (Render/Heroku)
 app.set("trust proxy", 1);
 
-// security headers and rate limit
-app.use(
-  helmet({
-    contentSecurityPolicy: process.env.NODE_ENV === "production" ? undefined : false,
-  })
-);
+// security + rate limit
+app.use(helmet({ contentSecurityPolicy: process.env.NODE_ENV === "production" ? undefined : false }));
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 1000 }));
-
-// json body
 app.use(express.json());
 
-// CORS allowlist (add your deployed frontend)
+// CORS allowlist
 const allowedOrigins = [
   "http://localhost:5174",
-  process.env.FRONTEND_ORIGIN, // e.g., https://ecopulse-frontend.vercel.app
+  process.env.FRONTEND_ORIGIN, // e.g., https://your-frontend.vercel.app
 ].filter(Boolean);
 
-app.use(
-  cors({
-    origin: (origin, cb) => {
-      if (!origin) return cb(null, true); // allow curl/postman
-      if (allowedOrigins.includes(origin)) return cb(null, true);
-      return cb(new Error("Not allowed by CORS"));
-    },
-    credentials: true,
-  })
-);
+app.use(cors({
+  origin: (origin, cb) => {
+    if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
+    return cb(new Error("Not allowed by CORS"));
+  },
+  credentials: true,
+}));
 
-// Friendly root and health for Render
+// Friendly root + health
 app.get("/", (_req, res) => {
-  res.status(200).json({
-    name: "EcoPulse API",
-    status: "ok",
-    uptime: process.uptime(),
-    docs: "/api",
-  });
+  res.status(200).json({ name: "EcoPulse API", status: "ok", uptime: process.uptime(), docs: "/api" });
 });
 app.get("/healthz", (_req, res) => res.status(200).send("ok"));
 
-// DEV MOCKS: disable in production (USE_MOCKS=0)
+// DEV MOCKS (turn off with USE_MOCKS=0)
 if (process.env.USE_MOCKS === "1") {
   const day = 86400000;
   const today = new Date();
@@ -111,17 +97,11 @@ app.use("/api/news", newsRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/profile", profileRoutes);
 
-// 404 for unknown routes
-app.use((_req, res) => {
-  res.status(404).json({ error: "Not Found" });
-});
-
-// error handler last
+// 404 + error handler
+app.use((_req, res) => res.status(404).json({ error: "Not Found" }));
 app.use((err, _req, res, _next) => {
   console.error("Server error:", err);
   res.status(err.status || 500).json({ error: err.message || "Internal Server Error" });
 });
 
-app.listen(PORT, () => {
-  console.log(`EcoPulse API listening on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`EcoPulse API listening on ${PORT}`));
