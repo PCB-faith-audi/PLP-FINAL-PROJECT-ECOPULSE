@@ -61,7 +61,8 @@ PORT=3000
 NODE_ENV=development
 USE_MOCKS=1
 # If using real DB later:
-# MONGODB_URI=mongodb+srv://...
+# Example for MongoDB Atlas (replace with your own, do NOT copy):
+# MONGODB_URI="your-atlas-uri-here"
 # If protecting APIs with Clerk server-side:
 # CLERK_SECRET_KEY=sk_test_...
 # For CORS in production (optional in dev):
@@ -214,3 +215,12 @@ git checkout -b phase-8-experiments
 ## License
 
 MIT. Add a LICENSE file to the repository if not present.
+
+## Environment Setup (safe example, no credentials)
+Create a `.env` file and add your MongoDB URI:
+
+For local MongoDB Compass:
+MONGODB_URI=mongodb://localhost:27017/your-db-name
+
+For MongoDB Atlas (if using it in future):
+# MONGODB_URI="your-atlas-uri-here"

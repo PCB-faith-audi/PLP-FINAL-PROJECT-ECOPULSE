@@ -1,6 +1,8 @@
 node_modules
 client/node_modules
 server/node_modules
+# ignore environment files
 .env
 dist
 .vscode
+.env.local
