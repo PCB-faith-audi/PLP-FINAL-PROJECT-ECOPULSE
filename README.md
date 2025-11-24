@@ -92,7 +92,7 @@ npm run dev
 
 Frontend (client/.env or dashboard UI on Vercel/Netlify):
 - VITE_CLERK_PUBLISHABLE_KEY: Clerk publishable key
-- VITE_API_BASE_URL: https://your-backend.example.com (set in production; leave empty for Vite proxy in dev)
+- VITE_API_BASE_URL: [https://your-backend.example.com ](https://ecopulse-backend-rn21.onrender.com/)(set in production; leave empty for Vite proxy in dev)
 
 Backend (server/.env or Render/Heroku dashboard):
 - PORT: 3000 (Render may override)
@@ -100,7 +100,19 @@ Backend (server/.env or Render/Heroku dashboard):
 - USE_MOCKS: 1 (dev with mock data) | 0 (real DB)
 - MONGODB_URI: MongoDB Atlas connection string (when USE_MOCKS=0)
 - CLERK_SECRET_KEY: Clerk secret (only if you enforce auth in server routes)
-- FRONTEND_ORIGIN: https://your-frontend-domain (CORS allowlist for production)
+- FRONTEND_ORIGIN: [https://your-frontend-domain ](https://plp-final-project-ecopulse.vercel.app/)(CORS allowlist for production)
+
+## Environment Setup (safe example, no credentials)
+
+Create a `.env` file and add your MongoDB URI:
+
+For local MongoDB Compass:
+MONGODB_URI=mongodb://localhost:27017/your-db-name
+
+For MongoDB Atlas (if using it in future):
+# MONGODB_URI="your-atlas-uri-here"
+
+Do NOT include real credentials in this README or in source control.
 
 ## Development Notes
 
@@ -215,12 +227,3 @@ git checkout -b phase-8-experiments
 ## License
 
 MIT. Add a LICENSE file to the repository if not present.
-
-## Environment Setup (safe example, no credentials)
-Create a `.env` file and add your MongoDB URI:
-
-For local MongoDB Compass:
-MONGODB_URI=mongodb://localhost:27017/your-db-name
-
-For MongoDB Atlas (if using it in future):
-# MONGODB_URI="your-atlas-uri-here"
